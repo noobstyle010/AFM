@@ -85,12 +85,11 @@ int main(){
   points3d a(1, true, 4.078);
   a.face_centered_cubic(10,10,10);
   a.shift(-5,-5,-5);
-  auto fn = [](tuple<float,float,float> xyz){
+  a.trim([](tuple<float,float,float> xyz){
     float x = get<0>(xyz);
     float y = get<1>(xyz);
     float z = get<2>(xyz);
     return 16 > x*x + y*y + z*z;
-  };
-  //a.trim(fn);
+  });
   a.print();
 }
