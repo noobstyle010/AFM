@@ -1,0 +1,11 @@
+python3 main1.py 1 50 3 8.7 8 0 &
+python3 main1.py 1 50 3 8.7 8 1 &
+python3 main1.py 1 50 3 8.7 8 2 &
+python3 main1.py 1 50 3 8.7 8 3 &
+python3 main1.py 1 50 3 8.7 8 4 &
+python3 main1.py 1 50 3 8.7 8 5 &
+python3 main1.py 1 50 3 8.7 8 0.5 &
+python3 main1.py 1 50 3 8.7 8 1.5 &
+python3 main1.py 1 50 3 8.7 8 2.5 &
+python3 main1.py 1 50 3 8.7 8 3.5 &
+python3 main1.py 1 50 3 8.7 8 4.5 &
