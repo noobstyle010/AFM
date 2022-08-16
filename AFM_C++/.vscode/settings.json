@@ -22,6 +22,10 @@
     "array": "cpp",
     "*.tcc": "cpp",
     "memory": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "cmath": "cpp",
+    "complex": "cpp",
+    "iterator": "cpp",
+    "string_view": "cpp"
   }
 }
