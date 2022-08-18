@@ -1,6 +1,5 @@
 #include "points3d.hpp"
-#include <matplotlib-cpp/matplotlibcpp.h>
-namespace plt = matplotlibcpp;
+#include <algorithm>
 
 class afm{
   private:
@@ -29,53 +28,56 @@ class afm{
   void scanXYZ();
 };
 
-// 制御なしのconstant hightでの計測
-void afm::scanXY(float z){
-  //100*100の画像を返せば良さげか?
-  int nx = 100;
-  int ny = 100;
-  float dx = 0.1;
-  float dy = 0.1;
-  vector<vector<float>> img(nx,vector<float>(ny));
-  for(int x=0;x<nx;x++){
-    for(int y=0;y<ny;y++){
-      img[x][y] = LennardJonesForce(probe.points, surface.points, x*dx, y*dy, z);
-    }
-  }
-  //出力
-  vector<float> plot_img(nx*ny);
-  for(int x=0;x<nx;x++){
-    for(int y=0;y<ny;y++){
-      plot_img.at(ny * y + x) = img[x][y];
-    }
-  }
-  const float* zptr = &(plot_img[0]);
-  const int colors = 1;
-  plt::imshow(zptr, nx, ny, colors);
-  plt::show();
-};
+// // 制御なしのconstant hightでの計測
+// void afm::scanXY(float z){
+//   //100*100の画像を返せば良さげか?
+//   // int nx = 100;
+//   // int ny = 100;
+//   int nx = 10;
+//   int ny = 10;
+//   float dx = 0.1;
+//   float dy = 0.1;
+//   vector<vector<float>> img(nx,vector<float>(ny));
+//   for(int x=0;x<nx;x++){
+//     for(int y=0;y<ny;y++){
+//       img[x][y] = LennardJonesForce(probe.points, surface.points, x*dx, y*dy, z);
+//     }
+//   }
+//   //出力
+//   vector<float> plot_img(nx*ny);
+//   for(int x=0;x<nx;x++){
+//     for(int y=0;y<ny;y++){
+//       plot_img.at(ny * y + x) = img[x][y];
+//     }
+//   }
+//   const float* zptr = &(plot_img[0]);
+//   const int colors = 1;
+//   plt::imshow(zptr, nx, ny, colors);
+//   plt::show();
+// };
 //表面から1~6の範囲でスキャン
 void afm::scanXYZ(){
   int nx = 100;
   int ny = 100;
-  int nz = 30;
+  int nz = 50;
   float dx = 0.1;
   float dy = 0.1;
   float dz = 0.1;
   //surface原子の位置;
-  vector<float> px,py,pz;
-  
-  plt::scatter(px,py,pz);
-  plt::save("./img/surface.png");
-
+  cout<<surface.points.size()<<" "<<probe.points.size()<<endl;
+  cout<<nx<<" "<<ny<<" "<<nz<<endl;
+  cout<<dx<<" "<<dy<<" "<<dz<<endl;
+  for(auto point : surface.points){
+    cout<<point[0]<<" "<<point[1]<<" "<<point[2]<<endl;
+  }
+  for(auto point : probe.points){
+    cout<<point[0]<<" "<<point[1]<<" "<<point[2]<<endl;
+  }
   for(int z=20;z<nz+20;z++){
-    for(auto point : surface.points){
-      cout<<point[0]<<","<<point[1]<<","<<point[2]<<endl;
-    }
     for(int y=0;y<ny;y++){
       for(int x=0;x<nx;x++){
         float f = LennardJonesForce(probe.points, surface.points, x*dx, y*dy, z*dz);
-        cout<<x<<","<<y<<","<<z<<","<<f<<endl;
+        cout<<x<<" "<<y<<" "<<z<<" "<<f<<endl;
       }
     }
   }
@@ -94,7 +96,7 @@ float afm::LennardJonesForce(vector<vector<float>> probe, vector<vector<float>> 
     p[0] += dx;
     p[1] += dy;
     // 高さ制御
-    p[2] = p[2]-min_probe+z;
+    p[2] = p[2] - min_probe + z + max_surface;
     for(auto s: surface){
       float distance = pow(pow(p[0] - s[0], 2) + pow(p[1] - s[1], 2) + pow(p[2] - s[2], 2), 0.5);// 純粋な距離
       float distance_z = p[2] - s[2];
@@ -107,35 +109,26 @@ float afm::LennardJonesForce(vector<vector<float>> probe, vector<vector<float>> 
 }
 
 
-int main(){
+// 曲率
+int main(int argc, char *argv[]){
   points3d surface(0, true, 4.078);
   points3d probe(1, true, 4.078);
-  //平面の生成
-  surface.face_centered_cubic(4.1,4.1,4.1);
-  surface.trim([=](tuple<float,float,float> xyz){
-    float x = get<0>(xyz);
-    float y = get<1>(xyz);
-    float z = get<2>(xyz);
-    return x<=3 && y<=3 && z<=3;
-  });
-  //プローブの生成
-  const float probe_r = 10; //曲率
+  //surface.face_centered_cubic(8,8,4);
+  const float probe_r = stof(argv[1]); //曲率
+  float under_limit = min<float>({0,15-probe_r});
   probe.face_centered_cubic(2*probe_r+10,2*probe_r+10,2*probe_r+10); 
   probe.shift(-probe_r,-probe_r,-probe_r);
-  //平面から2nm離れた原子の影響力はほぼないと考えて、半球状に切る
   probe.trim([=](tuple<float,float,float> xyz){
     float x = get<0>(xyz);
     float y = get<1>(xyz);
     float z = get<2>(xyz);
     float r = probe_r;
-    return r*r > x*x + y*y + z*z && z <= 0;
+    return r*r > x*x + y*y + z*z && z <= under_limit;
   });
-  
-  //原子間力の計算を行う
+  surface.add_atom(1,1,0);
+  surface.add_atom(4,1,0);
+  surface.add_atom(4,4,0);
+  surface.add_atom(1,4,0);
   afm AFM(surface, probe);
-  // //制御なしのXY測定
-  //AFM.scanXY(1);
   AFM.scanXYZ();
-  // //fm変調での取得画像
-  // AFM.modulationXY(z):
 }

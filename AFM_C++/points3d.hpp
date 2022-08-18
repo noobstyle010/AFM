@@ -24,7 +24,13 @@ class points3d{
   void print();
   void shift(float x, float y, float z);
   void trim(function<bool(tuple<float,float,float>)> fn);
+  void add_atom(float x, float y, float z);
 };
+
+//原子を追加する
+void points3d::add_atom(float x, float y, float z){
+  points.push_back({x, y, z});
+}
 
 // [0A,xA]の範囲で埋めて行く
 void points3d::face_centered_cubic(float x, float y, float z){
